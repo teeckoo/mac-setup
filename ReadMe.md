@@ -90,3 +90,7 @@ Prompt	Answer
 fuzzy auto-completion	yes   
 key bindings	yes   
 update shell config files	no
+
+---
+
+now refer `softwares.md`
