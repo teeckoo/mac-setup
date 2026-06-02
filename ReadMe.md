@@ -1,3 +1,51 @@
+<ins>Install and configure iterm :-</ins>
+
+`brew install --cask iterm2`
+
+<details><summary>configure iterm global options for non-admin user</summary>
+
+![show tabs](ReadMedia/a.png)
+
+![hide from doc](ReadMedia/b.png)
+
+</details>
+
+---
+
+<details><summary>configure iterm new profile options for non-admin user</summary>
+
+![create new profile](ReadMedia/1.png)
+
+
+### just provided name visor when profile created
+
+![just provided name visor when profile created](ReadMedia/2.png)
+
+![set visor profile to default](ReadMedia/3.png)
+
+![set color presets](ReadMedia/4.png)
+
+![change font](ReadMedia/5.png)
+
+![change window style](ReadMedia/6.png)
+
+![unlimited terminal scrollback](ReadMedia/7.png)
+
+![z alt_c binding and configure hotkey button](ReadMedia/8.png)
+
+![configure hotkey popup options](ReadMedia/9.png)
+
+
+
+</details>
+
+---
+
+<ins>git log on same screen (git shipped with commandline tools) :-</ins>
+
+`git config --global --replace-all core.pager "less -F -X"`
+
+
 <ins>Configure Zsh plugins :-</ins>
 
 `brew install --cask font-fira-code-nerd-font` (required font by starship)
