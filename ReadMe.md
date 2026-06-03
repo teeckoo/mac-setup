@@ -4,9 +4,9 @@
 
 <details><summary>configure iterm global options for non-admin user</summary>
 
-![show tabs](ReadMedia/a.png)
+![show tabs](ReadMedia/app1.png)
 
-![hide from doc](ReadMedia/b.png)
+![hide from doc](ReadMedia/app2.png)
 
 </details>
 
@@ -23,9 +23,9 @@
 
 ![set visor profile to default](ReadMedia/3.png)
 
-![set color presets](ReadMedia/4.png)
+![set color presets](ReadMedia/profile_color.png)
 
-![change font](ReadMedia/5.png)
+![change font](ReadMedia/profile_font.png)
 
 ![change window style](ReadMedia/6.png)
 
