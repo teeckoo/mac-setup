@@ -1,6 +1,6 @@
-<ins>Install and configure iterm :-</ins>
+<p align="center"><ins>Install and configure iterm :-</ins></p>
 
-`brew install --cask iterm2` (**if not already installed**)
+`brew install --cask iterm2 font-fira-code-nerd-font` (required font by starship)
 
 <details><summary>configure iterm global options for non-admin user</summary>
 
@@ -41,16 +41,14 @@
 
 ---
 
-<ins>git log on same screen (git shipped with commandline tools) :-</ins>
+<p align="center"><ins>git log on same screen (git shipped with commandline tools) :-</ins></p>
 
 `git config --global --replace-all core.pager "less -F -X"`
 
 
-<ins>Configure Zsh plugins :-</ins>
+<p align="center"><ins>Configure starship :-</ins></p>
 
-`brew install --cask font-fira-code-nerd-font` (required font by starship, **if not already installed**)
-
-`brew starship antidote` (**if not already installed**)
+`brew starship`
 
 Create `.config/starship.toml`
 
@@ -67,6 +65,11 @@ truncation_length = 0
 truncate_to_repo = false
 ```
 
+---
+
+<p align="center"><ins>Configure Zsh plugins :-</ins></p>
+
+`brew antidote`
 
 Create:
 
@@ -81,7 +84,7 @@ zsh-users/zsh-syntax-highlighting
 
 ---
 
-<ins>add below configuration to .zshrc :-</ins>
+<p align="center"><ins>configuration .zshrc :-</ins></p>
 
 ```
 # ============================================================
@@ -126,7 +129,9 @@ open new session to auto install plugins
 
 ---
 
-<ins>Configure fzf (one time activity) :-</ins>
+<p align="center"><ins>Configure fzf :-</ins></p>
+
+`brew install fzf`
 
 `$(brew --prefix)/opt/fzf/install`
 
@@ -141,4 +146,4 @@ update shell config files	no
 
 ---
 
-now refer `softwares.md`
+## now refer [softwares.md](https://github.com/teeckoo/mac-setup/blob/main/softwares.md)
