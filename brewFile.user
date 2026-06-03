@@ -62,7 +62,6 @@ brew "pandoc"
 # ============================================================
 
 brew "uv"                  # Python ecosystem
-brew "coursier"            # Scala ecosystem
 brew "sdkman-cli"          # JVM ecosystem
 
 
