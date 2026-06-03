@@ -1,6 +1,6 @@
 <ins>Install and configure iterm :-</ins>
 
-`brew install --cask iterm2`
+`brew install --cask iterm2` (if not already installed)
 
 <details><summary>configure iterm global options for non-admin user</summary>
 
@@ -48,9 +48,9 @@
 
 <ins>Configure Zsh plugins :-</ins>
 
-`brew install --cask font-fira-code-nerd-font` (required font by starship)
+`brew install --cask font-fira-code-nerd-font` (required font by starship, if not already installed)
 
-`brew starship antidote`
+`brew starship antidote` (if not already installed)
 
 Create `.config/starship.toml`
 
