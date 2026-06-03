@@ -9,7 +9,6 @@
 
 # Additional taps required for specific packages
 
-tap "coursier/formulas"    # coursier
 tap "sdkman/tap"           # sdkman-cli
 
 # ============================================================
@@ -32,7 +31,6 @@ brew "tree"
 brew "jq"
 brew "ripgrep"
 brew "fd"
-brew "fzf"
 
 brew "bat"
 brew "eza"

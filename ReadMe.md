@@ -48,7 +48,7 @@
 
 <p align="center"><ins>Configure starship :-</ins></p>
 
-`brew starship`
+`brew install starship`
 
 Create `.config/starship.toml`
 
@@ -69,7 +69,7 @@ truncate_to_repo = false
 
 <p align="center"><ins>Configure Zsh plugins :-</ins></p>
 
-`brew antidote`
+`brew install antidote`
 
 Create:
 
