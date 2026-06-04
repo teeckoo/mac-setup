@@ -16,11 +16,21 @@ rm install-no-brew.sh
 ```
 
 Installs into `~/.local/bin` (static binaries) and via official installers:
-`gkit`, `ripgrep` (rg), `fd`, `eza`, `git-delta` (delta), `gum`, `glow`,
-`pandoc`, `jq`, `bat`, `direnv`, `coursier` (cs), `git-filter-repo`, `uv`,
-`starship`, `sdkman`, `TinyTeX`, plus `antidote` and `fzf` for zsh. It resolves
-each tool's **latest** release automatically, so there are no pinned versions to
-update.
+`gkit`, `ripgrep` (rg), `gum`, `glow`, `pandoc`, `jq`, `bat`, `direnv`,
+`coursier` (cs), `git-filter-repo`, `uv`, `starship`, `TinyTeX`, plus
+`antidote` and `fzf` for zsh. It resolves each tool's **latest** release
+automatically, so there are no pinned versions to update.
+
+> **No `sdkman` on stock macOS.** Its installer hard-requires Bash 4+, but macOS
+> ships only Bash 3.2 and we can't brew a newer one. For JDK/JVM version
+> management without brew, use the already-installed **coursier**: `cs java --setup`.
+
+> **Not included on Intel: `fd`, `eza`, `delta`.** Their current upstream
+> releases no longer publish an Intel (`x86_64`) macOS binary (eza ships none at
+> all; fd and delta ship Apple-Silicon-only). Rather than pin to stale versions,
+> they're left out. Use the built-ins instead: `rg`/`find` for fd, `ls` for eza,
+> and git's default pager for delta. If you move to an Apple Silicon Mac, they
+> can be added back.
 
 > Note: `coursier`, `direnv`, `bat`, and `tinytex` were flagged in
 > `softwares.md` as slow/failing under brew (brew compiled them from source).
@@ -46,10 +56,8 @@ shell, so `~/.zprofile` reliably sets your PATH.
 # ============================================================
 
 # Binaries installed by install-no-brew.sh
-export PATH="$HOME/.local/bin:$PATH"
-
-# SDKMAN (JVM ecosystem)
-export SDKMAN_DIR="$HOME/.sdkman"
+# (~/.local/bin = most tools; ~/.cargo/bin = gkit, via its cargo-dist installer)
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 
 # Silence direnv's background log output (keeps the prompt clean)
 export DIRENV_LOG_FORMAT=""
@@ -79,9 +87,6 @@ eval "$(starship init zsh)"
 
 # ---- direnv ----
 eval "$(direnv hook zsh)"
-
-# ---- SDKMAN (keep near the end) ----
-[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ] && source "$SDKMAN_DIR/bin/sdkman-init.sh"
 ```
 
 `~/.zsh_plugins.txt` (plugin list, unchanged):
@@ -130,7 +135,7 @@ unzip, and double-click the `.ttf` files (installs to `~/Library/Fonts`, no admi
 - **gnupg** — no clean no-admin path. Either install GPG Suite
   (https://gpgtools.org — `.pkg`, needs admin) or build from source. If you only
   need signed git commits, consider SSH-key commit signing instead (no GPG).
-- **tree** — use `eza --tree` (already installed) instead.
+- **tree** — no Intel prebuilt; use `find . -type d` or `ls -R` instead.
 - **gnu-sed** — no prebuilt mac binary; install via `uv`/pip
   (`uv tool install ...`) is not available. If you need GNU sed specifically,
   build from source with Xcode Command Line Tools; otherwise BSD `sed` ships

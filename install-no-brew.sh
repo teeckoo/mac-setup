@@ -5,18 +5,56 @@
 # Drops static binaries into ~/.local/bin — no admin required.
 # Tested target: MacBook Pro 2017, Intel, macOS Ventura 13.
 # ============================================================
-set -euo pipefail
+# Best-effort installer: keep going if one tool fails (no `set -e`), but catch
+# unset vars and pipe failures. NOTE: must stay compatible with the stock macOS
+# /bin/bash 3.2 — avoid empty-array expansion under `set -u` (that bash errors).
+set -uo pipefail
+
+# This script ships Intel (x86_64) binaries only.
+if [ "$(uname -m)" != "x86_64" ]; then
+  echo "This installer targets Intel (x86_64) Macs; detected $(uname -m). Aborting." >&2
+  exit 1
+fi
+
+# Pre-flight: git (for antidote/fzf clones) and python3 (git-filter-repo runtime)
+# come from the Xcode Command Line Tools. Fail early with clear guidance instead
+# of dying at the first `git clone` halfway through.
+missing=""
+command -v git     >/dev/null 2>&1 || missing="$missing git"
+command -v python3 >/dev/null 2>&1 || missing="$missing python3"
+if [ -n "$missing" ]; then
+  echo "Missing required tool(s):$missing" >&2
+  echo "These come from the Xcode Command Line Tools. Install them first with:" >&2
+  echo "    xcode-select --install" >&2
+  echo "(that installer may prompt for admin), then re-run this script." >&2
+  exit 1
+fi
 
 BIN="$HOME/.local/bin"
 mkdir -p "$BIN"
 
+# Keep ALL temp work under $HOME — this user has no access to /tmp or /var.
+export TMPDIR="$HOME/.cache/no-brew/tmp"
+mkdir -p "$TMPDIR"
+
+# Tools that failed (for the end-of-run summary).
+FAILED=""
+
 # ---- helpers ------------------------------------------------
 
 # Print every browser_download_url from a repo's latest release.
+# Only 5 tools hit this (rg, gum, glow, pandoc, bat) — well under GitHub's
+# 60 req/hr anonymous limit. Retries to survive transient network drops.
 release_urls() {
-  curl -fsSL "https://api.github.com/repos/$1/releases/latest" \
-    | grep -o '"browser_download_url": *"[^"]*"' \
-    | sed 's/.*"\(https[^"]*\)".*/\1/'
+  local i out
+  for i in 1 2 3; do
+    out="$(curl -fsSL "https://api.github.com/repos/$1/releases/latest" 2>/dev/null \
+            | grep -o '"browser_download_url": *"[^"]*"' \
+            | sed 's/.*"\(https[^"]*\)".*/\1/')"
+    [ -n "$out" ] && { printf '%s\n' "$out"; return 0; }
+    sleep 3
+  done
+  return 1
 }
 
 # install_archive <repo> <url-regex-anchored-at-end> <binary-name>
@@ -24,7 +62,8 @@ install_archive() {
   local repo="$1" pat="$2" bin="$3" url tmp file found
   url="$(release_urls "$repo" | grep -iE "${pat}\$" | head -n1 || true)"
   if [ -z "$url" ]; then
-    echo "  ! $bin: no matching asset in $repo (skipped)"
+    echo "  ! $bin: GitHub API gave no asset (rate limit or network?) — skipped"
+    FAILED="$FAILED $bin"
     return 0
   fi
   tmp="$(mktemp -d)"
@@ -63,16 +102,24 @@ install_gzbin() {
 }
 
 # ---- prebuilt CLI binaries (GitHub releases) ---------------
-
+#
+# MAINTENANCE: version + filename are resolved automatically from each repo's
+# latest release. The ONLY thing that can ever need updating is the middle
+# argument — the regex that matches the macOS x86_64 asset name. If a tool
+# renames its release files (e.g. drops "x86_64-apple-darwin"), the run prints
+# "! <tool>: API gave no asset" and you just fix that one regex. Confirm the new
+# name at: https://github.com/<owner>/<repo>/releases/latest
+#
 echo "Installing static binaries into $BIN ..."
 install_archive BurntSushi/ripgrep   'x86_64-apple-darwin\.tar\.gz' rg
-install_archive sharkdp/fd           'x86_64-apple-darwin\.tar\.gz' fd
-install_archive eza-community/eza    'x86_64-apple-darwin\.tar\.gz' eza
-install_archive dandavison/delta     'x86_64-apple-darwin\.tar\.gz' delta
 install_archive charmbracelet/gum    'Darwin_x86_64\.tar\.gz'       gum
 install_archive charmbracelet/glow   'Darwin_x86_64\.tar\.gz'       glow
 install_archive jgm/pandoc           'x86_64-macOS\.zip'            pandoc
 install_archive sharkdp/bat          'x86_64-apple-darwin\.tar\.gz' bat
+# NOTE: fd, eza, delta are intentionally NOT here — their current releases ship
+# no Intel (x86_64) macOS binary (eza: none at all; fd/delta: aarch64 only).
+# On this Intel Mac use the built-ins instead: ripgrep/find (fd), ls (eza),
+# git's pager (delta). Re-add them only if you move to an Apple Silicon Mac.
 
 install_rawbin "https://github.com/jqlang/jq/releases/latest/download/jq-macos-amd64" jq
 install_rawbin "https://github.com/direnv/direnv/releases/latest/download/direnv.darwin-amd64" direnv
@@ -88,10 +135,12 @@ curl --proto '=https' --tlsv1.2 -LsSf \
 # uv (Python ecosystem) -> ~/.local/bin
 curl -LsSf https://astral.sh/uv/install.sh | sh
 # starship prompt -> ~/.local/bin
-curl -sS https://starship.rs/install/install.sh | sh -s -- -b "$BIN" -y
-# sdkman (JVM ecosystem) -> ~/.sdkman
-[ -d "$HOME/.sdkman" ] || curl -s "https://get.sdkman.io" | bash
+curl -sS https://starship.rs/install.sh | sh -s -- -b "$BIN" -y
+# NOTE: sdkman is intentionally NOT installed — its installer hard-requires
+# Bash 4+, but stock macOS ships only Bash 3.2 (and we can't brew a newer one).
+# For JDK/JVM version management without brew, use coursier: `cs java --setup`.
 # TinyTeX (LaTeX, no admin) -> ~/Library/TinyTeX
+mkdir -p "$HOME/Library"   # always exists for a real account; guard for safety
 if [ ! -d "$HOME/Library/TinyTeX" ]; then
   curl -sL "https://yihui.org/tinytex/install-bin-unix.sh" | sh
 fi
@@ -115,9 +164,16 @@ fi
 case ":$PATH:" in
   *":$BIN:"*) ;;
   *) echo "
-Add this near the top of ~/.zshrc:
-  export PATH=\"\$HOME/.local/bin:\$PATH\"" ;;
+Add this near the top of ~/.zprofile (gkit lives in ~/.cargo/bin):
+  export PATH=\"\$HOME/.local/bin:\$HOME/.cargo/bin:\$PATH\"" ;;
 esac
+
+if [ -n "$FAILED" ]; then
+  echo "
+! Skipped (GitHub API unreachable or rate-limited):$FAILED
+  Just re-run later — already-installed tools are skipped:
+    bash install-no-brew.sh"
+fi
 
 echo "
 Done. Open a new shell, then check: rg --version, gkit --version, cs version
