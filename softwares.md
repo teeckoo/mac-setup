@@ -2,7 +2,7 @@
 
 `curl -L -o brewFile.user https://raw.githubusercontent.com/teeckoo/mac-setup/main/brewFile.user`
 
-`brew bundle --file=brewFile.user`
+`brew bundle --verbose --file=brewFile.user`
 
 `rm brewFile.user`
 
