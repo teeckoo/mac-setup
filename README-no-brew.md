@@ -17,9 +17,15 @@ rm install-no-brew.sh
 
 Installs into `~/.local/bin` (static binaries) and via official installers:
 `gkit`, `ripgrep` (rg), `gum`, `glow`, `pandoc`, `jq`, `bat`, `direnv`,
-`coursier` (cs), `git-filter-repo`, `uv`, `starship`, `TinyTeX`, plus
-`antidote` and `fzf` for zsh. It resolves each tool's **latest** release
-automatically, so there are no pinned versions to update.
+`coursier` (cs), `git-filter-repo`, `uv`, `starship`, plus
+`antidote` and `fzf` for zsh. It also installs the **GUI apps** into
+`~/Applications` and the **FiraCode Nerd Font** into `~/Library/Fonts`
+(see section 3). It resolves each tool's **latest** release automatically, so
+there are no pinned versions to update.
+
+> The GUI apps add ~2 GB of downloads to the run. They're folded into the same
+> script (no admin needed — `~/Applications` is user-writable), so a single run
+> sets up CLI tools and apps together.
 
 > **No `sdkman` on stock macOS.** Its installer hard-requires Bash 4+, but macOS
 > ships only Bash 3.2 and we can't brew a newer one. For JDK/JVM version
@@ -32,10 +38,14 @@ automatically, so there are no pinned versions to update.
 > and git's default pager for delta. If you move to an Apple Silicon Mac, they
 > can be added back.
 
-> Note: `coursier`, `direnv`, `bat`, and `tinytex` were flagged in
-> `softwares.md` as slow/failing under brew (brew compiled them from source).
-> Without brew they install as **prebuilt binaries / a dedicated installer**, so
-> they're now fast and need no admin.
+> Note: `coursier`, `direnv`, and `bat` were flagged in `softwares.md` as
+> slow/failing under brew (brew compiled them from source). Without brew they
+> install as **prebuilt binaries**, so they're now fast and need no admin.
+
+> **TinyTeX removed.** On this stock macOS its installer triggered an admin-password
+> prompt, which breaks the no-admin guarantee, so it's no longer installed. If you
+> need LaTeX, install it manually from <https://yihui.org/tinytex/> and verify your
+> environment doesn't prompt for admin.
 
 > macOS Gatekeeper may quarantine a downloaded binary on first run
 > ("cannot be opened"). Clear it with:
@@ -96,26 +106,33 @@ zsh-users/zsh-autosuggestions
 zsh-users/zsh-syntax-highlighting
 ```
 
-## 3. GUI apps (casks) — drag to `~/Applications`
+## 3. GUI apps (casks) — installed automatically
 
-No admin needed: download, open the `.dmg`/`.zip`, drag the `.app` into
-`~/Applications` (create the folder if missing). Direct vendor downloads:
+`install-no-brew.sh` now installs these into `~/Applications` for you (no admin
+needed). It downloads the vendor `.dmg`/`.zip`, copies the `.app` out, and clears
+the Gatekeeper quarantine flag so each opens on first launch. All are the latest
+Intel/universal builds, resolved at run time:
 
-| App | Download |
+| App | Source |
 | --- | --- |
-| iTerm2 | https://iterm2.com/downloads.html |
-| VS Code | https://code.visualstudio.com/docs/?dv=osx (Intel build) |
-| IntelliJ IDEA | https://www.jetbrains.com/idea/download/ (Intel `.dmg`) |
-| Google Chrome | https://www.google.com/chrome/ |
-| Firefox | https://www.mozilla.org/firefox/ |
-| Chromium | https://download-chromium.appspot.com/ |
-| Opera | https://www.opera.com/download |
-| Slack | https://slack.com/downloads/mac |
-| Bruno | https://www.usebruno.com/downloads |
+| iTerm2 | `iterm2.com/downloads/stable/latest` (zip, universal) |
+| VS Code | `update.code.visualstudio.com/latest/darwin/stable` (Intel) |
+| IntelliJ IDEA | `download.jetbrains.com/product?code=IIU&latest&distribution=mac` |
+| Google Chrome | `dl.google.com/.../googlechrome.dmg` (universal) |
+| Firefox | `download.mozilla.org/?product=firefox-latest-ssl&os=osx` |
+| Slack | `slack.com/ssb/download-osx` (Intel x64) |
+| Bruno | latest GitHub release, `*_x64_mac.dmg` |
 
-FiraCode Nerd Font (required by starship): download from
-https://github.com/ryanoasis/nerd-fonts/releases/latest (`FiraCode.zip`),
-unzip, and double-click the `.ttf` files (installs to `~/Library/Fonts`, no admin).
+It also installs **FiraCode Nerd Font** (required by starship) into
+`~/Library/Fonts`.
+
+> If any app's download fails (network/rate limit), the script logs it and keeps
+> going — just re-run to retry; existing apps are replaced in place.
+
+> **Not automated: Opera and Chromium.** Neither offers a clean, signed,
+> scriptable Intel download (Chromium ships only unsigned snapshots). Install
+> them by hand if needed: Opera <https://www.opera.com/download>, Chromium
+> <https://download-chromium.appspot.com/>.
 
 ## 4. Tools needing manual handling
 
