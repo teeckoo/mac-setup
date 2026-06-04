@@ -25,14 +25,12 @@ brew "docker"
 
 brew "gum"
 brew "glow"
-brew "direnv"
 brew "tree"
 
 brew "jq"
 brew "ripgrep"
 brew "fd"
 
-brew "bat"
 brew "eza"
 
 # ============================================================
@@ -41,7 +39,6 @@ brew "eza"
 
 brew "git-filter-repo"
 brew "git-delta"
-brew "gnupg"
 
 # ============================================================
 # CLOUD / DEVOPS
@@ -69,7 +66,6 @@ brew "sdkman-cli"          # JVM ecosystem
 # ============================================================
 
 brew "gnu-sed"
-brew "wget"
 
 # ============================================================
 # API CLIENT
