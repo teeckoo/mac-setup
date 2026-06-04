@@ -6,6 +6,14 @@
 
 `rm brewFile.user`
 
+---
+
+### <ins>Note :  (for non admin user only)</ins>
+
 **coursier**, **direnv**, **wget** builds dependencies from source, which is very slow, so install manually   
 **bat**, **gnupg** even though builds dependencies from source, yet installation fails, so install manually   
 **tinytex** is not supported via homebrew. so install manually
+
+### <ins>For admin user :<ins>
+
+coursier, direnv, wget, bat, gnupg, tinytex can be installed directly with brew
