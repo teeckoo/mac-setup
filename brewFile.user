@@ -10,6 +10,7 @@
 # Additional taps required for specific packages
 
 tap "sdkman/tap"           # sdkman-cli
+tap "teeckoo/tap"          # gkit
 
 # ============================================================
 # CONTAINERS / VIRTUALIZATION CLIENTS
@@ -39,6 +40,7 @@ brew "eza"
 
 brew "git-filter-repo"
 brew "git-delta"
+brew "gkit"                # teeckoo/tap — git/ssh toolkit
 
 # ============================================================
 # CLOUD / DEVOPS
