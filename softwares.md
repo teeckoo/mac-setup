@@ -2,7 +2,7 @@
 
 `curl -L -o brewFile.user https://raw.githubusercontent.com/teeckoo/mac-setup/main/brewFile.user`
 
-`brew bundle --verbose --file=brewFile.user`
+`HOMEBREW_ACCEPT_BAKED_BOTTLES=1 brew bundle --verbose --file=brewFile.user`
 
 `rm brewFile.user`
 
