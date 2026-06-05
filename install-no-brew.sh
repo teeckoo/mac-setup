@@ -164,6 +164,34 @@ install_sdkman() {
   return 0
 }
 
+# strip_sdkman_bash_profile — SDKMAN's installer appends its init snippet to BOTH
+# ~/.zshrc and (on macOS) ~/.bash_profile. This setup is zsh-only and admin-free:
+# the login shell is zsh (env lives in ~/.zprofile) and direnv sources
+# sdkman-init.sh directly inside .envrc, so nothing ever reads ~/.bash_profile.
+# Remove SDKMAN's snippet back out of it, leaving the ~/.zshrc copy (the one that
+# matters) untouched. Best-effort and idempotent: a missing file, an already-clean
+# file, or a file the user has other content in are all handled safely.
+strip_sdkman_bash_profile() {
+  local bp="$HOME/.bash_profile"
+  [ -f "$bp" ] || return 0
+  grep -q 'sdkman-init.sh' "$bp" 2>/dev/null || return 0   # nothing SDKMAN-ish -> leave it
+  local tmp="$TMPDIR/bash_profile.nosdkman.$$"
+  # Drop exactly the three lines SDKMAN appended: its marker comment, the
+  # SDKMAN_DIR export, and the sdkman-init.sh source line.
+  grep -v -e 'THIS MUST BE AT THE END OF THE FILE FOR SDKMAN' \
+          -e 'export SDKMAN_DIR=' \
+          -e 'sdkman-init.sh' "$bp" > "$tmp" 2>/dev/null
+  [ "$?" -gt 1 ] && { rm -f "$tmp" 2>/dev/null; return 0; }  # grep error -> don't touch the file
+  if grep -q '[^[:space:]]' "$tmp" 2>/dev/null; then
+    # File has other (non-blank) content -> keep it, minus the SDKMAN snippet.
+    mv "$tmp" "$bp" && echo "  ✓ removed SDKMAN snippet from ~/.bash_profile (unused in this zsh setup)"
+  else
+    # SDKMAN created an otherwise-empty ~/.bash_profile -> remove the file entirely.
+    rm -f "$tmp" "$bp" && echo "  ✓ removed SDKMAN-only ~/.bash_profile (unused in this zsh setup)"
+  fi
+  return 0
+}
+
 # ---- GUI app helpers (.app -> ~/Applications, no admin) ----
 # Casks normally come from brew; here we fetch the vendor .dmg/.zip and drop the
 # .app into ~/Applications (writable without admin). Each lands as the latest
@@ -271,6 +299,9 @@ fi
 # SDKMAN (for `sdk` — e.g. Java versions pinned in a direnv .envrc) -> ~/.sdkman.
 # Runs the official installer under zsh to clear its bash-4 gate (see helper).
 install_sdkman
+# SDKMAN also wrote its init snippet into ~/.bash_profile; nothing reads that file
+# in this zsh-only, no-admin setup, so strip it back out (keeps the ~/.zshrc copy).
+strip_sdkman_bash_profile
 # NOTE: sdkman is intentionally NOT installed — its installer hard-requires
 # Bash 4+, but stock macOS ships only Bash 3.2 (and we can't brew a newer one).
 # For JDK/JVM version management without brew, use coursier: `cs java --setup`.
@@ -283,6 +314,12 @@ install_sdkman
 
 echo "Setting up zsh plugins ..."
 [ -d "$HOME/.antidote" ] || git clone --depth 1 https://github.com/mattmc3/antidote "$HOME/.antidote"
+# antidote reads its plugin list from ~/.zsh_plugins.txt; ~/.zshrc loads it on every
+# interactive shell. Seed it if absent so a fresh account doesn't hit
+# "antidote load: no such file or directory". Left alone if you've customized it.
+if [ ! -f "$HOME/.zsh_plugins.txt" ]; then
+  printf '%s\n' 'zsh-users/zsh-autosuggestions' 'zsh-users/zsh-syntax-highlighting' > "$HOME/.zsh_plugins.txt"
+fi
 if [ ! -d "$HOME/.fzf" ]; then
   git clone --depth 1 https://github.com/junegunn/fzf "$HOME/.fzf"
   "$HOME/.fzf/install" --completion --key-bindings --no-update-rc

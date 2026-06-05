@@ -123,6 +123,10 @@ ulimit -n 4096            # prevent "too many open files"
 setopt AUTO_CD            # cd by typing a folder name
 chpwd() { ls -C; }        # clean newline + listing after each cd
 
+# ---- Completions (must run before SDKMAN/plugins, which call compdef) ----
+autoload -Uz compinit
+compinit -i               # -i: ignore "insecure" fpath dirs instead of prompting
+
 # ---- Zsh plugins (antidote, cloned to ~/.antidote) ----
 source "$HOME/.antidote/antidote.zsh"
 antidote load < ~/.zsh_plugins.txt
@@ -135,23 +139,35 @@ eval "$(starship init zsh)"
 
 # ---- direnv ----
 eval "$(direnv hook zsh)"
-
-# ---- SDKMAN (installed to ~/.sdkman) — MUST stay at the END of this file ----
-export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 ```
 
-> **The SDKMAN block (like `fzf`) makes `sdk` work in interactive shells.** It
-> must be the **last** thing in `~/.zshrc` (SDKMAN manipulates PATH and sets up
-> completions). `install-no-brew.sh` also appends this same block automatically,
-> but it's idempotent (it won't add a second copy if the line is already there),
-> so keeping it in the template above just makes your hand-authored `~/.zshrc`
-> complete and correct. `~/.zprofile` needs nothing for SDKMAN.
+> **Don't add a SDKMAN block to `~/.zshrc` yourself.** SDKMAN's own installer
+> appends its init snippet (`export SDKMAN_DIR=…` + the `sdkman-init.sh` source)
+> to the **end** of `~/.zshrc` automatically when `install-no-brew.sh` runs it.
+> That snippet has to be the last thing in the file — which is exactly where it
+> lands — and it's idempotent, so a re-run won't add a second copy. `~/.zprofile`
+> needs nothing for SDKMAN.
+>
+> SDKMAN also writes the same snippet into `~/.bash_profile`, but nothing reads
+> that file in this zsh-only setup (your login shell is zsh, and direnv sources
+> `sdkman-init.sh` directly), so `install-no-brew.sh` strips it back out — leaving
+> only the `~/.zshrc` copy.
 >
 > Not needed for the direnv `.envrc` case — there you `source` `sdkman-init.sh`
 > inside the `.envrc` itself (see §5), which runs independently of `~/.zshrc`.
 
-`~/.zsh_plugins.txt` (plugin list, unchanged):
+> **Why the `compinit -i`.** `sdkman-init.sh` (and zsh completion generally) calls
+> `compinit`, which refuses to run if any `fpath` directory is "insecure" — i.e.
+> owned by someone other than you or root. On a machine that once had Homebrew,
+> `/usr/local/share/zsh/site-functions` is left behind owned by the old admin
+> user; you can't `chmod` it without admin, so a bare `compinit` prompts at every
+> new shell (and, if aborted, leaves `compdef` undefined → `command not found:
+> compdef`). Running `compinit -i` early — before anything sources
+> `sdkman-init.sh` — ignores those dirs silently and defines `compdef`, so SDKMAN
+> skips its own `compinit`. Keep it above the plugin and SDKMAN lines.
+
+`~/.zsh_plugins.txt` — the antidote plugin list. `install-no-brew.sh` creates it
+for you (with the two lines below) if it's missing; edit it to add plugins:
 
 ```
 zsh-users/zsh-autosuggestions
