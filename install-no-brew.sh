@@ -217,20 +217,28 @@ ZPROFILE
     cat >> "$HOME/.zshrc" <<'ZSHRC'
 
 # ---- no-brew base config (install-no-brew.sh) ----
-ulimit -n 4096                 # prevent "too many open files"
-setopt AUTO_CD                 # cd by typing a folder name
-chpwd() { ls -C; }             # listing after each cd
 
-# Completions — must run before SDKMAN/plugins (which call compdef). -i ignores
-# "insecure" fpath dirs (e.g. old Homebrew leftovers) instead of prompting.
+# ---- System ----
+ulimit -n 4096            # prevent "too many open files"
+setopt AUTO_CD            # cd by typing a folder name
+chpwd() { ls -C; }        # clean newline + listing after each cd
+
+# ---- Completions (must run before SDKMAN/plugins, which call compdef) ----
 autoload -Uz compinit
-compinit -i
+compinit -i               # -i: ignore "insecure" fpath dirs instead of prompting
 
-source "$HOME/.antidote/antidote.zsh"   # zsh plugins (antidote -> ~/.antidote)
+# ---- Zsh plugins (antidote, cloned to ~/.antidote) ----
+source "$HOME/.antidote/antidote.zsh"
 antidote load < ~/.zsh_plugins.txt
-eval "$(starship init zsh)"             # prompt
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh  # fzf
-eval "$(direnv hook zsh)"               # direnv
+
+# ---- Prompt (starship) ----
+eval "$(starship init zsh)"
+
+# ---- fzf (installed to ~/.fzf) ----
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# ---- direnv ----
+eval "$(direnv hook zsh)"
 ZSHRC
     echo "  ✓ updated ~/.zshrc"
   fi
@@ -350,9 +358,6 @@ install_sdkman
 # SDKMAN also wrote its init snippet into ~/.bash_profile; nothing reads that file
 # in this zsh-only, no-admin setup, so strip it back out (keeps the ~/.zshrc copy).
 strip_sdkman_bash_profile
-# NOTE: sdkman is intentionally NOT installed — its installer hard-requires
-# Bash 4+, but stock macOS ships only Bash 3.2 (and we can't brew a newer one).
-# For JDK/JVM version management without brew, use coursier: `cs java --setup`.
 # NOTE: TinyTeX is intentionally NOT installed — on this stock macOS its installer
 # triggered an admin-password prompt, which breaks the no-admin guarantee. If you
 # need LaTeX, install TinyTeX manually (https://yihui.org/tinytex/) and check
@@ -380,6 +385,11 @@ fi
 # signed, scriptable Intel download (Chromium ships only unsigned snapshots).
 echo "Installing GUI apps into $APPS ..."
 mkdir -p "$APPS"
+# Keep ~/Applications private (mode 700) like macOS's own ~/Documents, ~/Desktop
+# and ~/Library. On a shared Mac the home dir is group-traversable (staff, mode
+# 750), so a default-umask 755 ~/Applications would let other non-admin users
+# list your installed apps. chmod every run so an older 755 dir is corrected too.
+chmod 700 "$APPS"
 install_appzip "https://iterm2.com/downloads/stable/latest"                                 iTerm2
 install_appzip "https://update.code.visualstudio.com/latest/darwin/stable"                  "VS Code"
 install_dmg    "https://download.jetbrains.com/product?code=IIU&latest&distribution=mac"    "IntelliJ IDEA"

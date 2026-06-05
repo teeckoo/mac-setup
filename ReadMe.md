@@ -123,6 +123,25 @@ setopt AUTO_CD
 chpwd() {
   ls -C
 }
+
+
+# ============================================================
+# 4. fzf (fuzzy finder)
+# ============================================================
+
+# fzf's installer wrote ~/.fzf.zsh but — with "update shell config files: no"
+# (see below) — didn't add this line, so source it here for keybindings + completion.
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+
+# ============================================================
+# 5. SDKMAN (sdk — JVM/Java version management)
+# ============================================================
+
+# Prefer an official ~/.sdkman install; otherwise use brew's sdkman-cli.
+[ -d ~/.sdkman ] && export SDKMAN_DIR="$HOME/.sdkman"
+[ -d ~/.sdkman ] || export SDKMAN_DIR="$(brew --prefix sdkman-cli)/libexec"
+[[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]] && source "$SDKMAN_DIR/bin/sdkman-init.sh"
 ```
 
 open new session to auto install plugins

@@ -28,16 +28,9 @@ there are no pinned versions to update.
 > script (no admin needed — `~/Applications` is user-writable), so a single run
 > sets up CLI tools and apps together.
 
-> **No `sdkman` on stock macOS.** Its installer hard-requires Bash 4+, but macOS
-> ships only Bash 3.2 and we can't brew a newer one. For JDK/JVM version
-> management without brew, use the already-installed **coursier**: `cs java --setup`.
-
-> **Not included on Intel: `fd`, `eza`, `delta`.** Their current upstream
-> releases no longer publish an Intel (`x86_64`) macOS binary (eza ships none at
-> all; fd and delta ship Apple-Silicon-only). Rather than pin to stale versions,
-> they're left out. Use the built-ins instead: `rg`/`find` for fd, `ls` for eza,
-> and git's default pager for delta. If you move to an Apple Silicon Mac, they
-> can be added back.
+> **Not installed on the no-brew Intel/no-admin path:** `fd`, `eza`, `delta`, `wget`,
+> `gnupg`, `tree`, `gnu-sed`, `docker`/`colima`, TinyTeX — each lacks an Intel binary or a
+> no-admin path; use the macOS built-ins / alternatives.
 
 > Note: `coursier`, `direnv`, and `bat` were flagged in `softwares.md` as
 > slow/failing under brew (brew compiled them from source). Without brew they
@@ -50,11 +43,6 @@ there are no pinned versions to update.
 > failing on a permission-denied write to `/usr/local`. A rerun replaces
 > `~/.local/node` with the latest LTS. If your existing `~/.npmrc` already sets a
 > `prefix`, this overwrites it.
-
-> **TinyTeX removed.** On this stock macOS its installer triggered an admin-password
-> prompt, which breaks the no-admin guarantee, so it's no longer installed. If you
-> need LaTeX, install it manually from <https://yihui.org/tinytex/> and verify your
-> environment doesn't prompt for admin.
 
 > macOS Gatekeeper may quarantine a downloaded binary on first run
 > ("cannot be opened"). Clear it with:
@@ -106,24 +94,16 @@ shell, so `~/.zprofile` reliably sets your PATH.
 `~/.zprofile`
 
 ```zsh
-# ============================================================
-# ~/.zprofile — login shell. Environment & PATH.
-# ============================================================
-
-# Binaries installed by install-no-brew.sh
-# (~/.local/bin = most tools; ~/.cargo/bin = gkit, via its cargo-dist installer)
+# ---- no-brew base config (install-no-brew.sh) ----
+# ~/.local/bin = most tools; ~/.cargo/bin = gkit (its cargo-dist installer)
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
-
-# Silence direnv's background log output (keeps the prompt clean)
-export DIRENV_LOG_FORMAT=""
+export DIRENV_LOG_FORMAT=""    # silence direnv's background log output
 ```
 
 `~/.zshrc`
 
 ```zsh
-# ============================================================
-# ~/.zshrc — every interactive shell.
-# ============================================================
+# ---- no-brew base config (install-no-brew.sh) ----
 
 # ---- System ----
 ulimit -n 4096            # prevent "too many open files"
