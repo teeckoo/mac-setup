@@ -96,6 +96,13 @@ Use the split below: environment/PATH in `~/.zprofile` (runs once at login),
 interactive setup in `~/.zshrc`. On macOS every Terminal/iTerm tab is a login
 shell, so `~/.zprofile` reliably sets your PATH.
 
+> **`install-no-brew.sh` adds these base blocks for you.** It appends the
+> `~/.zprofile` PATH block and the `~/.zshrc` interactive block below if they
+> aren't already there (guarded by a marker, so a re-run never duplicates — and
+> anything else you've put in those files is left untouched). The uv, cargo, and
+> SDKMAN installers each append their own lines separately; the blocks shown here
+> are only the part this script owns.
+
 `~/.zprofile`
 
 ```zsh
@@ -143,10 +150,12 @@ eval "$(direnv hook zsh)"
 
 > **Don't add a SDKMAN block to `~/.zshrc` yourself.** SDKMAN's own installer
 > appends its init snippet (`export SDKMAN_DIR=…` + the `sdkman-init.sh` source)
-> to the **end** of `~/.zshrc` automatically when `install-no-brew.sh` runs it.
-> That snippet has to be the last thing in the file — which is exactly where it
-> lands — and it's idempotent, so a re-run won't add a second copy. `~/.zprofile`
-> needs nothing for SDKMAN.
+> to the **end** of `~/.zshrc` automatically when `install-no-brew.sh` runs it —
+> after the base block above, so it lands below `compinit -i` (which is exactly
+> where it has to be: `compdef` is defined first, so SDKMAN skips its own
+> `compinit` and you get no insecure-dir prompt). It's idempotent (greps before
+> appending), so a re-run won't add a second copy. `~/.zprofile` needs nothing
+> for SDKMAN.
 >
 > SDKMAN also writes the same snippet into `~/.bash_profile`, but nothing reads
 > that file in this zsh-only setup (your login shell is zsh, and direnv sources

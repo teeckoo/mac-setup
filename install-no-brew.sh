@@ -192,6 +192,50 @@ strip_sdkman_bash_profile() {
   return 0
 }
 
+# scaffold_dotfiles — make sure ~/.zprofile and ~/.zshrc carry the brew-free base
+# config: the PATH/env in ~/.zprofile, and the interactive block in ~/.zshrc
+# (compinit -i, antidote, starship, fzf, direnv). Simple append, guarded by a
+# marker so a re-run never duplicates — the same grep-then-append pattern the
+# uv / cargo-dist / SDKMAN installers use. We append ONLY the bits we own; uv
+# (~/.local/bin/env), cargo (~/.cargo/env) and SDKMAN (its sdkman-init.sh block)
+# each append their own afterward. `compinit -i` lands before SDKMAN's block
+# (SDKMAN installs right after this), so it defines compdef first and SDKMAN
+# skips its own compinit — no insecure-fpath prompt.
+scaffold_dotfiles() {
+  if ! grep -q 'no-brew base config' "$HOME/.zprofile" 2>/dev/null; then
+    cat >> "$HOME/.zprofile" <<'ZPROFILE'
+
+# ---- no-brew base config (install-no-brew.sh) ----
+# ~/.local/bin = most tools; ~/.cargo/bin = gkit (its cargo-dist installer)
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+export DIRENV_LOG_FORMAT=""    # silence direnv's background log output
+ZPROFILE
+    echo "  ✓ updated ~/.zprofile"
+  fi
+
+  if ! grep -q 'no-brew base config' "$HOME/.zshrc" 2>/dev/null; then
+    cat >> "$HOME/.zshrc" <<'ZSHRC'
+
+# ---- no-brew base config (install-no-brew.sh) ----
+ulimit -n 4096                 # prevent "too many open files"
+setopt AUTO_CD                 # cd by typing a folder name
+chpwd() { ls -C; }             # listing after each cd
+
+# Completions — must run before SDKMAN/plugins (which call compdef). -i ignores
+# "insecure" fpath dirs (e.g. old Homebrew leftovers) instead of prompting.
+autoload -Uz compinit
+compinit -i
+
+source "$HOME/.antidote/antidote.zsh"   # zsh plugins (antidote -> ~/.antidote)
+antidote load < ~/.zsh_plugins.txt
+eval "$(starship init zsh)"             # prompt
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh  # fzf
+eval "$(direnv hook zsh)"               # direnv
+ZSHRC
+    echo "  ✓ updated ~/.zshrc"
+  fi
+}
+
 # ---- GUI app helpers (.app -> ~/Applications, no admin) ----
 # Casks normally come from brew; here we fetch the vendor .dmg/.zip and drop the
 # .app into ~/Applications (writable without admin). Each lands as the latest
@@ -296,8 +340,12 @@ curl -sS https://starship.rs/install.sh | sh -s -- -b "$BIN" -y
 if ! curl -fsSL https://claude.ai/install.sh | bash; then
   echo "  ! claude: installer failed (network/region?) — skipped"; FAILED="$FAILED claude"
 fi
+# Shell config base block (~/.zprofile PATH + ~/.zshrc compinit/plugins) — appended
+# before SDKMAN so `compinit -i` precedes the SDKMAN block it appends next.
+scaffold_dotfiles
 # SDKMAN (for `sdk` — e.g. Java versions pinned in a direnv .envrc) -> ~/.sdkman.
-# Runs the official installer under zsh to clear its bash-4 gate (see helper).
+# Runs the official installer under zsh to clear its bash-4 gate (see helper). Its
+# installer appends the `sdkman-init.sh` block to the end of ~/.zshrc itself.
 install_sdkman
 # SDKMAN also wrote its init snippet into ~/.bash_profile; nothing reads that file
 # in this zsh-only, no-admin setup, so strip it back out (keeps the ~/.zshrc copy).
