@@ -102,6 +102,68 @@ install_gzbin() {
   echo "  ✓ $2"
 }
 
+# install_node — official Node.js LTS (bundles npm + npx) into ~/.local/node,
+# with node/npm/npx symlinked onto PATH. No admin: global `npm i -g` is pointed
+# at ~/.local so packages land in ~/.local/bin (already on PATH) instead of a
+# root dir. Idempotent: a rerun replaces ~/.local/node with the latest LTS.
+install_node() {
+  local ver url tmp top nbin
+  # Newest LTS from the dist index. Objects are sorted newest-first; the first
+  # one whose "lts" is a quoted codename (not false) is the current LTS release.
+  ver="$(curl -fsSL https://nodejs.org/dist/index.json 2>/dev/null \
+          | tr '}' '\n' | grep '"lts":"' | head -n1 \
+          | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1)"
+  if [ -z "$ver" ]; then
+    echo "  ! node/npm: could not resolve latest LTS (network?) — skipped"; FAILED="$FAILED node"; return 0
+  fi
+  url="https://nodejs.org/dist/${ver}/node-${ver}-darwin-x64.tar.gz"
+  tmp="$(mktemp -d)"
+  if ! curl -fsSL "$url" -o "$tmp/node.tar.gz"; then
+    echo "  ! node/npm: download failed (no Intel build for ${ver}?) — skipped"; FAILED="$FAILED node"; rm -rf "$tmp"; return 0
+  fi
+  if ! tar -xzf "$tmp/node.tar.gz" -C "$tmp"; then
+    echo "  ! node/npm: extract failed — skipped"; FAILED="$FAILED node"; rm -rf "$tmp"; return 0
+  fi
+  top="$(find "$tmp" -maxdepth 1 -type d -name 'node-*-darwin-x64' | head -n1)"
+  if [ -z "$top" ]; then
+    echo "  ! node/npm: unexpected archive layout — skipped"; FAILED="$FAILED node"; rm -rf "$tmp"; return 0
+  fi
+  rm -rf "$HOME/.local/node"
+  mv "$top" "$HOME/.local/node"
+  rm -rf "$tmp"
+  nbin="$HOME/.local/node/bin"
+  ln -sf "$nbin/node" "$BIN/node"
+  ln -sf "$nbin/npm"  "$BIN/npm"
+  ln -sf "$nbin/npx"  "$BIN/npx"
+  # Send global installs to ~/.local (on PATH, no admin) instead of /usr/local.
+  # Run with node on PATH so npm's `#!/usr/bin/env node` shebang resolves.
+  PATH="$nbin:$PATH" "$nbin/npm" config set prefix "$HOME/.local" >/dev/null 2>&1
+  echo "  ✓ node ${ver} + npm/npx"
+}
+
+# install_sdkman — SDKMAN into ~/.sdkman (for `sdk`, e.g. Java versions pinned in
+# a direnv .envrc). The official installer hard-aborts on stock bash 3.2
+# ("requires Bash 4 or higher"), but that gate is wrapped in `[ -n "$BASH_VERSION" ]`,
+# so running the SAME official installer under zsh skips it. The runtime
+# (sdkman-init.sh) has no bash-4 features, so `sdk` then works in zsh and in the
+# bash 3.2 that direnv uses for .envrc. Best-effort; logged to FAILED on failure.
+install_sdkman() {
+  local boot="$TMPDIR/sdkman-bootstrap.sh"
+  # Primary: official installer under zsh (gate is bash-only -> skipped).
+  if curl -fsSL https://get.sdkman.io | zsh; then return 0; fi
+  # Fallback (only if zsh ever breaks): same installer under bash with the lone
+  # bash-4 gate neutralized (3.x passes a `-lt 0` test); runtime needs no bash 4.
+  echo "  sdkman: zsh install failed; retrying under bash with the bash-4 gate neutralized ..."
+  if curl -fsSL https://get.sdkman.io -o "$boot" \
+     && grep -q 'bash_major_version" -lt 4' "$boot"; then
+    sed 's/bash_major_version" -lt 4/bash_major_version" -lt 0/' "$boot" > "$boot.patched"
+    if /bin/bash "$boot.patched"; then rm -f "$boot" "$boot.patched"; return 0; fi
+  fi
+  rm -f "$boot" "$boot.patched" 2>/dev/null
+  echo "  ! sdkman: install failed (network?) — skipped"; FAILED="$FAILED sdkman"
+  return 0
+}
+
 # ---- GUI app helpers (.app -> ~/Applications, no admin) ----
 # Casks normally come from brew; here we fetch the vendor .dmg/.zip and drop the
 # .app into ~/Applications (writable without admin). Each lands as the latest
@@ -185,6 +247,9 @@ install_rawbin "https://github.com/direnv/direnv/releases/latest/download/direnv
 install_rawbin "https://raw.githubusercontent.com/newren/git-filter-repo/main/git-filter-repo" git-filter-repo
 install_gzbin  "https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-apple-darwin.gz" cs
 
+# Node.js LTS (bundles npm + npx). Official Intel tarball -> ~/.local/node.
+install_node
+
 # ---- official curl installers ------------------------------
 
 echo "Running official installers ..."
@@ -195,6 +260,17 @@ curl --proto '=https' --tlsv1.2 -LsSf \
 curl -LsSf https://astral.sh/uv/install.sh | sh
 # starship prompt -> ~/.local/bin
 curl -sS https://starship.rs/install.sh | sh -s -- -b "$BIN" -y
+# Claude Code (Anthropic's CLI) -> ~/.local/bin. The native installer ships a
+# static x86_64 build and installs under $HOME, so no admin and no Node needed.
+# It self-verifies a SHA-256 checksum and runs with its own `set -e`, so a
+# network/region failure exits that subshell without aborting our run; record it
+# in the FAILED summary like the GitHub-release tools.
+if ! curl -fsSL https://claude.ai/install.sh | bash; then
+  echo "  ! claude: installer failed (network/region?) — skipped"; FAILED="$FAILED claude"
+fi
+# SDKMAN (for `sdk` — e.g. Java versions pinned in a direnv .envrc) -> ~/.sdkman.
+# Runs the official installer under zsh to clear its bash-4 gate (see helper).
+install_sdkman
 # NOTE: sdkman is intentionally NOT installed — its installer hard-requires
 # Bash 4+, but stock macOS ships only Bash 3.2 (and we can't brew a newer one).
 # For JDK/JVM version management without brew, use coursier: `cs java --setup`.
@@ -264,11 +340,12 @@ esac
 if [ -n "$FAILED" ]; then
   echo "
 ! Skipped (GitHub API unreachable or rate-limited):$FAILED
-  Just re-run later — already-installed tools are skipped:
+  Safe to re-run to retry these — installed tools are refreshed to latest in
+  place (only antidote/fzf and unreachable tools are skipped):
     bash install-no-brew.sh"
 fi
 
 echo "
-Done. Open a new shell, then check: rg --version, gkit --version, cs version
+Done. Open a new shell, then check: rg --version, gkit --version, cs version, claude --version, npm --version
 GUI apps were installed into ~/Applications (open one to confirm).
 See README-no-brew for docker, awscli, and the .zshrc changes."

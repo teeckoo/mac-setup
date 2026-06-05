@@ -35,6 +35,12 @@ brew "fd"
 brew "eza"
 
 # ============================================================
+# AI / CODING ASSISTANTS
+# ============================================================
+
+cask "claude-code"         # Anthropic's Claude Code CLI
+
+# ============================================================
 # GIT / SECURITY
 # ============================================================
 
@@ -60,6 +66,7 @@ brew "pandoc"
 
 brew "uv"                  # Python ecosystem
 brew "sdkman-cli"          # JVM ecosystem
+brew "node"                # Node.js runtime + npm/npx
 
 
 
