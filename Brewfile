@@ -1,6 +1,9 @@
 # ============================================================
-# Brewfile.user
-# Non-admin macOS developer workstation
+# Brewfile
+# macOS developer workstation — the brew-based install path.
+# Use with `brew bundle` (auto-detects ./Brewfile). The brew-free alternative
+# (for old Intel / no-admin, where brew compiles from source) is
+# perfect-bottles.sh + manual-tools.sh — see README-no-brew.md.
 # ============================================================
 
 # ============================================================
@@ -15,9 +18,10 @@ tap "teeckoo/tap"          # gkit
 # ============================================================
 # CONTAINERS / VIRTUALIZATION CLIENTS
 # ============================================================
-
-brew "colima"
-brew "docker"
+# NOTE: colima + the docker CLI are NOT brewed for the non-admin path — a
+# non-admin ~/brew (custom prefix) has no bottles and would source-build colima +
+# lima + qemu + Go (brutal). They're installed prebuilt by manual-tools.sh (vz
+# backend, no admin). Admin: `brew install colima docker` (bottles) — see the guide.
 
 
 # ============================================================
@@ -99,4 +103,18 @@ cask "intellij-idea"
 # ============================================================
 # COMMUNICATION
 # ============================================================
+
+cask "slack"
+
+# ============================================================
+# TERMINAL
+# ============================================================
+
+cask "iterm2"
+
+# ============================================================
+# FONTS
+# ============================================================
+
+cask "font-fira-code-nerd-font"   # required by starship; installs to ~/Library/Fonts (no admin)
 

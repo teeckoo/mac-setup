@@ -1,0 +1,28 @@
+# ============================================================
+# Brewfile.admin
+# Brew-only EXTRAS for a 100%-brew admin (default-prefix Homebrew, so these all
+# install as fast bottles). They're kept OUT of the main `Brewfile` because a
+# non-admin `~/brew` (custom prefix) has no bottles and would build them from
+# source (slow/failing) — non-admin installs them prebuilt via manual-tools.sh.
+#
+# Admin install = the whole workstation, all brew, no manual steps:
+#     brew bundle                          # the Brewfile ("the rest")
+#     brew bundle --file=Brewfile.admin    # these extras
+# ============================================================
+
+# The non-admin "install manually" list — bottles fine for admin
+brew "coursier"      # cs
+brew "direnv"
+brew "wget"
+brew "awscli"
+brew "bat"
+brew "gnupg"
+brew "eza"
+
+# Container dev (colima = the Docker engine in a Lima VM; docker = the CLI client)
+brew "colima"
+brew "docker"
+
+# LaTeX — TinyTeX has no Homebrew formula, so the brew-native option is MacTeX
+# (no-GUI). Use `basictex` instead if you want a smaller base.
+cask "mactex-no-gui"

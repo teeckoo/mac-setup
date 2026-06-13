@@ -1,0 +1,16 @@
+[book]
+title = "macOS dev setup"
+authors = ["teeckoo"]
+description = "Non-admin-first macOS workstation setup — three paths (old Intel no-brew, new Mac brew+manual, admin brew)."
+src = "src"
+language = "en"
+
+[output.html]
+default-theme = "rust"
+preferred-dark-theme = "ayu"
+git-repository-url = "https://github.com/teeckoo/mac-setup"
+edit-url-template = "https://github.com/teeckoo/mac-setup/edit/main/docs/{path}"
+
+[output.html.fold]
+enable = true
+level = 0
