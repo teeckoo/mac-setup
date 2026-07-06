@@ -34,17 +34,19 @@ curl -fsSL "$base/perfect-bottles.sh" | bash     # CLI tools (+ refreshes the fo
 curl -fsSL "$base/manual-tools.sh"    | bash     # GUI apps + extras (+ refreshes iTerm2)
 ```
 
-`perfect-bottles.sh` installs `gkit, rg, gum, glow, pandoc, jq, git-filter-repo, uv,
-starship, claude, node`+`npm`/`npx`, `sdk` (SDKMAN), `antidote`, `fzf` (and the
-FiraCode font). It auto-loads the shared `lib-no-brew.sh` (local copy if present, else
+`perfect-bottles.sh` installs `gkit, rg, gum, glow, pandoc, mdbook, jq,
+git-filter-repo, uv, starship, claude, node`+`npm`/`npx`, `sdk` (SDKMAN), `antidote`,
+`fzf` (and the FiraCode font). It auto-loads the shared `lib-no-brew.sh` (local copy if present, else
 fetched), so the one-liner works with no clone. The scripts re-install iTerm2 + the
 font from step 1 in place — harmless.
 
 {{#include common/gui-apps.md}}
 
 > On Intel, `manual-tools.sh` also installs `coursier` (cs), `direnv`, `bat` as
-> prebuilt binaries, `awscli` via the no-admin user pkg, and **container dev**
-> (`colima` + `lima` + the `docker` CLI — `colima start --vm-type vz`, no admin).
+> prebuilt binaries, `awscli` via the no-admin user pkg, `R` (the CRAN build —
+> its `.pkg` is expanded and `R.framework` relocated into `~/.local`, with
+> `R`/`Rscript` on PATH; no admin), and **container dev** (`colima` + `lima` +
+> the `docker` CLI — `colima start --vm-type vz`, no admin).
 > It prints guidance for `tinytex` (its installer prompts for admin on Ventura),
 > `eza` (no macOS binary — use `ls`), `wget` (use `curl`), and `gnupg` (no no-admin
 > path — consider SSH commit signing).

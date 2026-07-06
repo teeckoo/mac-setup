@@ -18,6 +18,7 @@ brew "awscli"
 brew "bat"
 brew "gnupg"
 brew "eza"
+brew "mdbook"        # Rust build → bottles for admin; non-admin gets it prebuilt
 
 # Container dev (colima = the Docker engine in a Lima VM; docker = the CLI client)
 brew "colima"

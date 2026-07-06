@@ -20,7 +20,7 @@ curl -L -o Brewfile       "$base/Brewfile"
 curl -L -o Brewfile.admin "$base/Brewfile.admin"
 brew bundle --verbose                          # the Brewfile ("the rest"): casks + formulae
 brew bundle --verbose --file=Brewfile.admin    # extras: coursier, direnv, wget, awscli, bat,
-                                               #   gnupg, eza, colima, docker, MacTeX
+                                               #   gnupg, eza, mdbook, colima, docker, MacTeX
 rm Brewfile Brewfile.admin
 ```
 

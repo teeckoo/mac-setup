@@ -358,6 +358,62 @@ install_awscli() {
   return 0
 }
 
+# install_r — the CRAN R build, installed WITHOUT admin. CRAN's .pkg is root-only
+# (so `installer -target CurrentUserHomeDirectory` is refused, unlike awscli's)
+# and the `R` launcher hardcodes R_HOME_DIR=/Library/Frameworks/R.framework/... ,
+# so a no-admin install means: expand the pkg, lift R.framework into ~/.local,
+# rewrite that baked-in R_HOME_DIR to the new path, and expose R/Rscript on PATH
+# (~/.local/bin, already on PATH). Rscript is a compiled binary that reads no
+# hardcoded home but honors $R_HOME, so it gets a tiny R_HOME-exporting wrapper.
+# Arch-aware (Intel + Apple Silicon). Best-effort; idempotent (replaces in place).
+install_r() {
+  local slug asset base pkgfile url tmp fw dest rhome launcher
+  slug="$(pick_arch big-sur-x86_64 big-sur-arm64)"
+  asset="$(pick_arch x86_64 arm64)"
+  base="https://cran.r-project.org/bin/macosx/${slug}/base"
+  # Newest R-<ver>-<arch>.pkg from the CRAN dir listing (zero-pad the version so a
+  # lexical sort is numeric, like install_docker_cli).
+  pkgfile="$(curl -fsSL "$base/" 2>/dev/null \
+              | grep -oE "R-[0-9]+\.[0-9]+\.[0-9]+-${asset}\.pkg" | sort -u \
+              | awk -F'[-.]' '{printf "%05d%05d%05d %s\n",$2,$3,$4,$0}' | sort | tail -n1 | cut -d' ' -f2)"
+  if [ -z "$pkgfile" ]; then
+    echo "  ! R: could not resolve latest CRAN build (network?) — skipped"; FAILED="$FAILED R"; return 0
+  fi
+  url="$base/$pkgfile"
+  tmp="$(mktemp -d)"
+  if ! curl -fsSL "$url" -o "$tmp/R.pkg"; then
+    echo "  ! R: download failed — skipped"; FAILED="$FAILED R"; rm -rf "$tmp"; return 0
+  fi
+  # --expand-full also extracts the component Payloads, so R.framework appears as
+  # real files under $tmp/x (find is robust to the internal component naming).
+  if ! pkgutil --expand-full "$tmp/R.pkg" "$tmp/x" >/dev/null 2>&1; then
+    echo "  ! R: could not expand pkg — skipped"; FAILED="$FAILED R"; rm -rf "$tmp"; return 0
+  fi
+  fw="$(find "$tmp/x" -maxdepth 6 -type d -name 'R.framework' | head -n1 || true)"
+  if [ -z "$fw" ]; then
+    echo "  ! R: R.framework not found in pkg payload — skipped"; FAILED="$FAILED R"; rm -rf "$tmp"; return 0
+  fi
+  dest="$HOME/.local/R.framework"
+  rm -rf "$dest"                       # re-run refreshes: replace any older copy
+  if ! cp -R "$fw" "$dest"; then
+    echo "  ! R: could not place framework in ~/.local — skipped"; FAILED="$FAILED R"; rm -rf "$tmp"; return 0
+  fi
+  rm -rf "$tmp"
+  rhome="$dest/Resources"
+  # Rewrite the launcher's hardcoded home so `R` (and everything it spawns) finds
+  # its framework under $HOME instead of the non-existent /Library/Frameworks.
+  launcher="$rhome/bin/R"
+  if [ -f "$launcher" ]; then
+    sed -i.bak "s#^R_HOME_DIR=.*#R_HOME_DIR=$rhome#" "$launcher" && rm -f "$launcher.bak"
+  fi
+  ln -sf "$launcher" "$BIN/R"
+  # Rscript honors $R_HOME; give it a wrapper that points at the relocated tree.
+  printf '#!/bin/sh\nexport R_HOME="%s"\nexec "%s/bin/Rscript" "$@"\n' "$rhome" "$rhome" > "$BIN/Rscript"
+  chmod +x "$BIN/Rscript"
+  echo "  ✓ R (~/.local/R.framework)"
+  return 0
+}
+
 # ---- container dev (colima): prebuilt, no-admin -------------
 # colima IS the container runtime (Docker engine in a Lima VM, vz backend — no
 # Docker Desktop, no daemon to install). brew would source-build colima + lima +

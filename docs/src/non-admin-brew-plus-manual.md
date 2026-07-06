@@ -64,7 +64,10 @@ curl -fsSL https://raw.githubusercontent.com/teeckoo/mac-setup/main/manual-tools
 
 `manual-tools.sh` installs the manual-install list as **prebuilt binaries**
 (so they don't source-build under `~/brew`): `coursier` (cs), `direnv`, `bat`,
-`awscli`, `tinytex` (no brew formula), and **container dev** — `colima` + `lima` +
+`awscli`, `tinytex` (no brew formula), `R` (the CRAN build relocated into
+`~/.local` — no admin, since the `r` cask prompts for one), `mdbook` (a Rust
+build that `~/brew` would compile from source), and **container
+dev** — `colima` + `lima` +
 the `docker` CLI (`colima start --vm-type vz`, no admin — colima *is* the Docker
 engine). It prints guidance for `eza` (no macOS binary — `ls`/`cargo install eza`),
 `wget` (use `curl`), and `gnupg` (SSH commit signing).

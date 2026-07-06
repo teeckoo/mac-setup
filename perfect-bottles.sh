@@ -52,6 +52,7 @@ install_archive BurntSushi/ripgrep 'x86_64-apple-darwin\.tar\.gz' rg
 install_archive charmbracelet/gum  'Darwin_x86_64\.tar\.gz'       gum
 install_archive charmbracelet/glow 'Darwin_x86_64\.tar\.gz'       glow
 install_archive jgm/pandoc         'x86_64-macOS\.zip'            pandoc
+install_archive rust-lang/mdBook   'x86_64-apple-darwin\.tar\.gz' mdbook
 
 install_rawbin "https://github.com/jqlang/jq/releases/latest/download/jq-macos-amd64" jq
 install_rawbin "https://raw.githubusercontent.com/newren/git-filter-repo/main/git-filter-repo" git-filter-repo

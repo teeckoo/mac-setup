@@ -2,7 +2,7 @@
 # ============================================================
 # manual-tools.sh
 # Installs the non-admin "install manually" list (coursier, direnv, bat, awscli,
-# tinytex, + eza/wget/gnupg guidance) as PREBUILT binaries / no-admin installers —
+# tinytex, R, + eza/wget/gnupg guidance) as PREBUILT binaries / no-admin installers —
 # on BOTH the old Intel mac and the new Apple Silicon mac. Why both? A non-admin
 # Homebrew lives in a custom prefix (~/brew), and Homebrew only ships bottles for
 # the DEFAULT prefix — so `brew install` of these would build from source (slow) or
@@ -47,6 +47,18 @@ case "$(uname -m)" in
   arm64) install_tinytex ;;
   *) echo "  - tinytex: skipped on Intel (installer prompts for admin on Ventura); install by hand from https://yihui.org/tinytex/ if you need LaTeX"; FAILED="$FAILED tinytex" ;;
 esac
+
+# mdbook: a clean prebuilt binary. On Intel perfect-bottles.sh installs it; on
+# Apple Silicon that script doesn't run and a non-admin ~/brew would source-build
+# it (Rust), so grab the vendor's prebuilt aarch64 binary here instead.
+case "$(uname -m)" in
+  arm64) install_archive rust-lang/mdBook 'aarch64-apple-darwin\.tar\.gz' mdbook ;;
+esac
+
+# R (CRAN): no non-admin brew path — the `r` cask prompts for admin and a
+# non-admin ~/brew would source-build. Install the official CRAN build without
+# admin by relocating its framework into ~/.local (see install_r). Both arches.
+install_r
 
 # eza/wget/gnupg: no clean no-admin macOS install on either arch -> guidance.
 echo "  - eza:   no macOS binary on any arch; use 'ls' / 'ls -R', or 'cargo install eza'"; FAILED="$FAILED eza"
