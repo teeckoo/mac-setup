@@ -67,20 +67,50 @@ export DIRENV_LOG_FORMAT=""
 `~/.zshrc`:
 
 ```zsh
+. "$HOME/.cargo/env"
+
+. "$HOME/.local/bin/env"
+
 # ---- no-brew base config (perfect-bottles.sh) ----
-ulimit -n 4096
-setopt AUTO_CD
-chpwd() { ls -C; }
 
+# ---- System ----
+ulimit -n 4096            # prevent "too many open files"
+setopt AUTO_CD            # cd by typing a folder name
+
+# ---- Unified Directory Change Hooks ----
+autoload -U add-zsh-hook
+
+# Global path tracking marker (safely preserved)
+typeset -g _LAST_LISTED_DIR=""
+
+# 1. Your implicit local environment script processor
+_chpwd_trigger_lenvrc() {
+  if [[ -f ".dir.session" ]]; then
+    source ".dir.session"
+  fi
+}
+add-zsh-hook chpwd _chpwd_trigger_lenvrc
+
+# ---- Completions (must run before SDKMAN/plugins, which call compdef) ----
 autoload -Uz compinit
-compinit -i               # ignore "insecure" fpath dirs instead of prompting
+compinit -i               # -i: ignore "insecure" fpath dirs instead of prompting
 
+# ---- Zsh plugins (antidote, cloned to ~/.antidote) ----
 source "$HOME/.antidote/antidote.zsh"
 antidote load < ~/.zsh_plugins.txt
+
+# ---- Prompt (starship) ----
 eval "$(starship init zsh)"
+
+# ---- fzf (installed to ~/.fzf) ----
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-# direnv comes from manual-tools.sh; guard makes this a no-op if absent
+
+# ---- direnv (installed by manual-tools.sh; guarded so this is a no-op if absent) ----
 command -v direnv >/dev/null 2>&1 && eval "$(direnv hook zsh)"
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 ```
 
 > **SDKMAN.** `perfect-bottles.sh` installs SDKMAN into `~/.sdkman` by running its
@@ -90,6 +120,8 @@ command -v direnv >/dev/null 2>&1 && eval "$(direnv hook zsh)"
 > be) — don't add one yourself. Just need a JDK? `cs java --setup` (coursier).
 
 {{#include common/starship.md}}
+
+{{#include common/global_direnv.md}}
 
 {{#include common/zsh-plugins.md}}
 
